@@ -3,8 +3,8 @@ import numpy as np
 import shutil
 import os
 import subprocess
-import json
 import requests
+import sys
 
 frames_path = "./frames"
 video_path = "./in.mp4"
@@ -32,10 +32,10 @@ def extract_frames():
 
 def read_img(filename):
     pic = Image.open(os.path.join(frames_path, filename))
-    return np.array(pic)
+    return pic 
 
 
-def capture_frame():
+def capture_frame(id):
     frames = [
         f for f in os.listdir(frames_path) 
             if os.path.isfile(os.path.join(frames_path, f))]
@@ -50,7 +50,10 @@ def capture_frame():
         curr_file = frames[i]
         curr = read_img(curr_file)
 
-        mse = ((prev - curr)**2).mean()
+        if curr.height != prev.height or curr.width != prev.width:
+            curr = curr.resize((prev.width, prev.height))
+
+        mse = ((np.array(prev) - np.array(curr))**2).mean()
         if max_mse < mse:
             max_mse = mse
             target_idx = i
@@ -58,16 +61,20 @@ def capture_frame():
         prev = curr
 
     print(target_idx, n)
-    shutil.copy(os.path.join(frames_path, frames[target_idx-1]), "./out1.bmp")
-    shutil.copy(os.path.join(frames_path, frames[target_idx]), "./out2.bmp")
+    shutil.copy(os.path.join(frames_path, frames[target_idx-1]), f"./result/{id}-1.bmp")
+    shutil.copy(os.path.join(frames_path, frames[target_idx]), f"./result/{id}-2.bmp")
 
 
-def main():
-    url = input("instagram reels url: ")
+def main(argv):
+    if len(argv) < 2:
+        sys.exit("need more args")
+
+    url = argv[1]
+    id = argv[2]
     download_reels(url)
     extract_frames()
-    capture_frame()
+    capture_frame(id)
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv)
