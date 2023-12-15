@@ -71,6 +71,16 @@ def main(argv):
 
     url = argv[1]
     id = argv[2]
+
+    try:
+        shutil.rmtree('frames')
+    except:
+        print("hi")
+    try:
+        os.mkdir('frames')
+    except:
+        print("hi2")
+
     download_reels(url)
     extract_frames()
     capture_frame(id)
